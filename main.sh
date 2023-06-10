@@ -32,3 +32,14 @@ function add_acl(){
     local ip="$1"
     acl localnet src "$ip"
 }
+
+function check_proxy_status(){
+    local $ip="$1"
+    http_status=$(curl -s -o /dev/null -w "%{http_code}" "$ip")
+
+    if [ "$http_status" -eq 200 ]; then
+        echo "HTTP status code 200: Success"
+    else
+        echo "HTTP status code $http_status: Error"
+    fi
+}
