@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 function install_dependencies(){
     sudo apt update -y
@@ -42,4 +42,38 @@ function check_proxy_status(){
     else
         echo "HTTP status code $http_status: Error"
     fi
+}
+
+function install_apache_utils(){
+    sudo apt install apache2-utils -y
+}
+
+function set_password(){
+    local $password="$1"    
+    sudo touch /etc/squid/passwd
+    sudo chown proxy /etc/squid/passwd
+    sudo htpasswd -cb /etc/squid/passwd proxyuser "$password"
+}
+
+function add_config(){
+    content=$(cat <<EOF
+    auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd
+    auth_param basic children 5
+    auth_param basic realm Squid Basic Authentication
+    auth_param basic credentialsttl 2 hours
+    acl auth_users proxy_auth REQUIRED
+    http_access allow auth_users
+    EOF
+    )
+
+    echo "$content" >> /etc/squid/squid.conf
+}
+
+function restart_squid(){ 
+    sudo systemctl restart squid
+}
+
+function block_website(){
+    local $website="$1"
+    echo "$website" >> /etc/squid/proxy-block-list.acl
 }
